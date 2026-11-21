@@ -2,24 +2,24 @@ package chess.panels;
 
 import chess.GameFrame;
 import chess.Position;
+import chess.network.MoveListener;
+import chess.network.OpponentConnection;
+import chess.network.SocketConnectionAdapter;
 
 import javax.swing.*;
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.net.InetAddress;
-import java.net.ServerSocket;
-import java.net.Socket;
 import java.net.UnknownHostException;
 
 
-public class GamePanelLAN extends GamePanel {
+/**
+ * Adapter pattern - CLIENT.
+ * The LAN game only talks to an OpponentConnection. All socket and stream
+ * code now lives in SocketConnectionAdapter.
+ */
+public class GamePanelLAN extends GamePanel implements MoveListener {
 
-
-    private Socket socket;
-    private ObjectOutputStream oos;
-    private ObjectInputStream ois;
-    private ServerSocket serverSocket;
+    private OpponentConnection connection;
 
 
     public GamePanelLAN() {
@@ -60,114 +60,53 @@ public class GamePanelLAN extends GamePanel {
     }
 
 
-    public void connect(InetAddress ipAdd, int port) {
-        try {
-            socket = new Socket(ipAdd, port);
-            oos = new ObjectOutputStream(socket.getOutputStream());
-            ois = new ObjectInputStream(socket.getInputStream());
+    public void connect(InetAddress ipAdd, int port) throws IOException {
+        connection = SocketConnectionAdapter.connectOrHost(ipAdd, port);
+
+        if (connection.isHost()) {
+            connection.startListening(this);
+            JOptionPane.showConfirmDialog(null,
+                    "You play as Whites", "Connected !", JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE);
+        } else {
             JOptionPane.showConfirmDialog(null,
                     "You play as Blacks", "Connected !", JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE);
             whiteMove = false;
             opponentTurn();
-            createReciver();
-
-        } catch (IOException e) {
-            createServer(port);
+            connection.startListening(this);
         }
     }
 
-    public void createReciver() {
-        Thread reciver = new Thread() {
-            public synchronized void run() {
-                while (true) {
-                    try {
-                        if (socket == null && serverSocket == null) return;
-                        Position recPositionOld = (Position) ois.readObject();
-                        Position recPositionNew = (Position) ois.readObject();
-                        threadMoveChess(recPositionNew, recPositionOld);
-                        repaint();
-                        enabled = true;
+    // ---- MoveListener: called by the connection's receiver thread ----
 
-                    } catch (ClassNotFoundException | IOException e) {
-                        if (endGame) return;
-                        JOptionPane.showConfirmDialog(null,
-                                "Connection is lost. The game is over", "Disconection",
-                                JOptionPane.DEFAULT_OPTION, JOptionPane.ERROR_MESSAGE);
-                        closeFrame();
-                        break;
-                    }
-
-                }
-            }
-        };
-        reciver.start();
+    @Override
+    public void onMoveReceived(Position from, Position to) {
+        super.moveChessman(to, from); // super: apply the move without sending it back
+        repaint();
+        enabled = true;
     }
 
-    public void createServer(int port) {
-
-        try {
-            serverSocket = new ServerSocket(port);
-            Socket s = serverSocket.accept();
-            oos = new ObjectOutputStream(s.getOutputStream());
-            ois = new ObjectInputStream(s.getInputStream());
-            createReciver();
-            JOptionPane.showConfirmDialog(null,
-                    "You play as Whites", "Connected !", JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE);
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+    @Override
+    public void onConnectionLost() {
+        if (endGame) return;
+        JOptionPane.showConfirmDialog(null,
+                "Connection is lost. The game is over", "Disconection",
+                JOptionPane.DEFAULT_OPTION, JOptionPane.ERROR_MESSAGE);
+        closeFrame();
     }
 
-    public void sendData(Position newPosition, Position oldPosition) {
-
-        try {
-            oos.writeObject(oldPosition);
-            oos.flush();
-            oos.writeObject(newPosition);
-            oos.flush();
-            opponentTurn();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public void threadMoveChess(Position newPosition, Position currentPosition) {
-        super.moveChessman(newPosition, currentPosition);
-    }
+    // ---- the local player's move: apply it, then send it ----
 
     @Override
     public void moveChessman(Position newPosition, Position currentPosition) {
         super.moveChessman(newPosition, currentPosition);
-        sendData(newPosition, currentPosition);
+        connection.sendMove(currentPosition, newPosition);
+        opponentTurn();
     }
 
     @Override
     public void closeFrame() {
-        resetSockets();
+        if (connection != null) connection.close();
         super.closeFrame();
-    }
-
-
-    public void resetSockets() {
-        try {
-            if (oos != null) {
-                oos.close();
-                ois.close();
-                oos = null;
-                ois = null;
-            }
-            if (socket != null) {
-                socket.close();
-                socket = null;
-            }
-            if (serverSocket != null) {
-                serverSocket.close();
-                serverSocket = null;
-            }
-        } catch (IOException e1) {
-            e1.printStackTrace();
-        }
     }
 
 
