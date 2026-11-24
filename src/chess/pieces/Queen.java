@@ -16,11 +16,6 @@ public class Queen extends Chessman {
     }
 
     @Override
-    public Chessman copy(Chessman other) {
-        return new Queen(color, pos.x, pos.y);
-    }
-
-    @Override
     protected void loadImage() {
         if (this.color == SideColor.WHITE) {
             imgSrc = 1;

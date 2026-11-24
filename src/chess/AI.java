@@ -20,8 +20,7 @@ public class AI {
         int i = 0;
         List<Move> allMoves = getAIMoves(aiCol, board);
         Collections.shuffle(allMoves);
-        Chessman[][] tempBoard = Arrays.stream(board).map(arr -> Arrays.stream(arr).map(chess -> chess == null ? null : chess.copy(chess))
-                .toArray(Chessman[]::new)).toArray(Chessman[][]::new);
+        Chessman[][] tempBoard = copyBoard(board);
 
         for (Move p : allMoves) {
             score = getScore(aiCol, tempBoard);
@@ -36,6 +35,23 @@ public class AI {
             i++;
         }
         return allMoves.get(bestID);
+    }
+
+    /**
+     * Returns a board the AI can try moves on without touching the real game:
+     * every piece is replaced by its own copy (Chessman.copy, the Prototype).
+     */
+    public static Chessman[][] copyBoard(Chessman[][] board) {
+        Chessman[][] copy = new Chessman[board.length][];
+        for (int x = 0; x < board.length; x++) {
+            copy[x] = new Chessman[board[x].length];
+            for (int y = 0; y < board[x].length; y++) {
+                if (board[x][y] != null) {
+                    copy[x][y] = board[x][y].copy();
+                }
+            }
+        }
+        return copy;
     }
 
     public static int min(int depth, SideColor aiCol, SideColor turnCol, Chessman[][] board, int alpha, int beta) {

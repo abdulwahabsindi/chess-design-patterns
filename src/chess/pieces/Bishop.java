@@ -15,11 +15,6 @@ public class Bishop extends Chessman {
     }
 
     @Override
-    public Chessman copy(Chessman other) {
-        return new Bishop(color, pos.x, pos.y);
-    }
-
-    @Override
     protected void loadImage() {
         if (this.color == SideColor.WHITE) {
             imgSrc = 3;

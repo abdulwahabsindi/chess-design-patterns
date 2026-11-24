@@ -18,11 +18,6 @@ public class Rook extends Chessman {
     }
 
     @Override
-    public Chessman copy(Chessman other) {
-        return new Rook(color, pos.x, pos.y);
-    }
-
-    @Override
     protected void loadImage() {
         if (this.color == SideColor.WHITE) {
             imgSrc = 2;
