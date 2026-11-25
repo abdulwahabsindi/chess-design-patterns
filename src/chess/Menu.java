@@ -1,9 +1,10 @@
 package chess;
 
 
-import chess.panels.GamePanelAI;
-import chess.panels.GamePanelHot;
-import chess.panels.GamePanelLAN;
+import chess.opponents.AIOpponent;
+import chess.opponents.HumanOpponent;
+import chess.opponents.NetworkOpponent;
+import chess.panels.GamePanel;
 
 import javax.swing.*;
 import java.awt.*;
@@ -50,7 +51,7 @@ public class Menu extends JFrame {
         hot.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                new GameFrame(new GamePanelHot());
+                new GameFrame(new GamePanel(new HumanOpponent()));
                 setVisible(false);
                 dispose();
             }
@@ -60,7 +61,7 @@ public class Menu extends JFrame {
             @Override
             public void actionPerformed(ActionEvent e) {
                 try {
-                    new GameFrame(new GamePanelLAN());
+                    new GameFrame(new GamePanel(new NetworkOpponent()));
                     setVisible(false);
                     dispose();
                 } catch (Exception ignored) {
@@ -73,7 +74,7 @@ public class Menu extends JFrame {
         ai.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                new GameFrame(new GamePanelAI());
+                new GameFrame(new GamePanel(new AIOpponent()));
                 setVisible(false);
                 dispose();
             }

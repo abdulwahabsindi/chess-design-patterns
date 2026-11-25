@@ -3,6 +3,7 @@ package chess.panels;
 import chess.Menu;
 import chess.Position;
 import chess.SideColor;
+import chess.opponents.OpponentStrategy;
 import chess.pieces.*;
 
 import javax.imageio.ImageIO;
@@ -17,7 +18,14 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 
-public abstract class GamePanel extends JPanel {
+/**
+ * Strategy pattern - CONTEXT.
+ * The game screen: draws the board, takes the local player's clicks and
+ * applies the rules. What happens on the opponent's turn is delegated to an
+ * OpponentStrategy (hot-seat, AI or network), so one class serves all three
+ * modes instead of a subclass for each.
+ */
+public class GamePanel extends JPanel {
 
     private final BufferedImage _boardImg;
     private final int SQUARE_SIZE = 64;
@@ -36,10 +44,10 @@ public abstract class GamePanel extends JPanel {
     public boolean whiteMove;
     public boolean enabled;
 
+    private final OpponentStrategy opponent;
 
-    abstract void opponentTurn();
-
-    public GamePanel() {
+    public GamePanel(OpponentStrategy opponent) {
+        this.opponent = opponent;
         _boardImg = new BufferedImage(8 * SQUARE_SIZE, 8 * SQUARE_SIZE, BufferedImage.TYPE_INT_ARGB);
         drawBoard();
         this.setPreferredSize(new Dimension(8 * SQUARE_SIZE, 8 * SQUARE_SIZE));
@@ -56,6 +64,12 @@ public abstract class GamePanel extends JPanel {
         generatePieces();
         loadImages();
         MouseListner();
+
+        opponent.start(this);
+    }
+
+    public boolean isGameOver() {
+        return endGame;
     }
 
     public void paintComponent(Graphics g) {
@@ -243,8 +257,12 @@ public abstract class GamePanel extends JPanel {
         }
 
         if (!contains) return;
-        moveChessman(newPosition, _selected.pos);
-        opponentTurn();
+        Position oldPosition = _selected.pos;
+        moveChessman(newPosition, oldPosition);
+        // TODO(Stage 3, agree with Abdulwahab): this is where the local move hands over to the
+        // opponent. It must stay right after the move is applied; if his Command pattern changes
+        // how moveChessman is called here, move this line to just after the command runs.
+        opponent.opponentTurn(oldPosition, newPosition);
 
 
     }
@@ -436,6 +454,7 @@ public abstract class GamePanel extends JPanel {
     }
 
     public void closeFrame() {
+        opponent.stop();
         new Menu();
         SwingUtilities.windowForComponent(this).dispose();
     }
