@@ -1,19 +1,17 @@
 package chess;
 
 import chess.panels.GamePanel;
-import chess.pieces.Chessman;
-import chess.pieces.King;
-import chess.pieces.Pawn;
-import chess.pieces.Queen;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import chess.pieces.*;
 
 public class AI {
     static int currentDepth;
     static int maxDepth = 4;
+    private static ChessmanFactory factory = new ChessmanFactory();
 
     public static Move minMax(Chessman[][] board, SideColor aiCol, int alpha, int beta) {
         int bestScore = alpha;
@@ -120,7 +118,7 @@ public class AI {
             if (newPosition.y == 7 || newPosition.y == 0) {
                 Position tempP = piece.pos;
                 SideColor tempC = piece.color;
-                piece = new Queen(tempC, tempP.x, tempP.y);
+                piece = factory.getPiece(ChessmanType.QUEEN, tempC, tempP.x, tempP.y);
             }
         }
         board[newPosition.x][newPosition.y] = piece;
