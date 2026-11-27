@@ -48,6 +48,24 @@ public class GamePanelAI extends GamePanel {
         t.start();
     }
 
+    // vs AI: undo your move and the AI's reply together, so it is your turn again.
+    // Not while the AI is thinking (enabled is false then).
+    @Override
+    public void undo() {
+        if (!enabled || history.undoCount() < 2) return;
+        history.undo();
+        history.undo();
+        refreshAfterUndo();
+    }
+
+    @Override
+    public void redo() {
+        if (!enabled || history.redoCount() < 2) return;
+        history.redo();
+        history.redo();
+        refreshAfterUndo();
+    }
+
     void randomMove(SideColor col) {
 
         ArrayList<Position> pieceMoves;

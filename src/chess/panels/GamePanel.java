@@ -3,6 +3,10 @@ package chess.panels;
 import chess.Menu;
 import chess.Position;
 import chess.SideColor;
+import chess.moves.CastlingCommand;
+import chess.moves.Command;
+import chess.moves.MoveCommand;
+import chess.moves.MoveHistory;
 import chess.pieces.*;
 
 import javax.imageio.ImageIO;
@@ -35,6 +39,8 @@ public abstract class GamePanel extends JPanel {
 
     public boolean whiteMove;
     public boolean enabled;
+
+    protected final MoveHistory history = new MoveHistory();
 
 
     abstract void opponentTurn();
@@ -278,27 +284,38 @@ public abstract class GamePanel extends JPanel {
         }
     }
 
+    private Command createMove(Position from, Position to){
+        Chessman piece = piecesBoard[from.x][from.y];
+
+        if (piece instanceof King && piece.notMoved && (to.x == 2 || to.x == 6)) {
+            int rookFromX = (to.x == 2) ? 0 : 7;
+            int rookToX   = (to.x == 2) ? 3 : 5;
+            Position rookFrom = new Position(rookFromX, to.y);
+            Position rookTo   = new Position(rookToX, to.y);
+            Chessman rook = piecesBoard[rookFrom.x][rookFrom.y];
+
+            MoveCommand kingMove = new MoveCommand(piecesBoard, piece, from, to, null);
+            MoveCommand rookMove = new MoveCommand(piecesBoard, rook, rookFrom, rookTo, null);
+            return new CastlingCommand(kingMove, rookMove);
+        }
+
+        if(piece instanceof Pawn && (to.y == 0 || to.y == 7)){
+            Chessman queen = factory.getPiece(ChessmanType.QUEEN, piece.color, from.x, from.y);
+            return new MoveCommand(piecesBoard, piece, from, to, queen);
+        }
+        
+        return new MoveCommand(piecesBoard, piece, from, to, null);
+    }
+
     public void moveChessman(Position newPosition, Position oldPosition) {
         _lastMove.clear();
         _lastMove.add(oldPosition);
         _lastMove.add(newPosition);
-        Chessman piece = piecesBoard[oldPosition.x][oldPosition.y];
 
-        if (piece instanceof King && piece.notMoved) {
-            castling(newPosition, piece, piecesBoard);
-        } else if (piece instanceof Pawn) {
-            ((Pawn) piece).startPosition = false;
-            if (newPosition.y == 7 || newPosition.y == 0) {
-                Position tempP = piece.pos;
-                SideColor tempC = piece.color;
-                piece = factory.getPiece(ChessmanType.QUEEN, tempC, tempP.x, tempP.y);
-            }
-        }
+        history.execute(createMove(oldPosition, newPosition));
 
-        piecesBoard[newPosition.x][newPosition.y] = piece;
-        piecesBoard[piece.pos.x][piece.pos.y] = null;
-        piece.pos = newPosition;
-        piece.notMoved = false;
+
+        Chessman piece = piecesBoard[newPosition.x][newPosition.y];
         SideColor c = piece.color.swapColor();
 
 
@@ -312,6 +329,27 @@ public abstract class GamePanel extends JPanel {
         }
     }
 
+    protected void refreshAfterUndo(){
+        _selected = null;
+
+        _possibleMoves.clear();
+        _lastMove.clear();
+
+        if (check(piecesBoard, SideColor.WHITE)) {
+            _checkPosition = findKing(piecesBoard, SideColor.WHITE);
+        }
+        else if (check(piecesBoard, SideColor.BLACK)){
+            _checkPosition = findKing(piecesBoard, SideColor.BLACK);
+        }
+        else{
+            _checkPosition = null;
+        }
+
+        repaint();
+    }
+
+    public void undo() {}
+    public void redo() {}
 
     public static ArrayList<Position> getAllMoves(SideColor col, Chessman[][] board) {
         ArrayList<Position> moves = new ArrayList<Position>();
