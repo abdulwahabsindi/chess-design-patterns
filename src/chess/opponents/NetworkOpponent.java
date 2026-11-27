@@ -1,32 +1,37 @@
-package chess.panels;
+package chess.opponents;
 
-import chess.GameFrame;
 import chess.Position;
+import chess.moves.MoveHistory;
 import chess.network.MoveListener;
 import chess.network.OpponentConnection;
 import chess.network.SocketConnectionAdapter;
+import chess.panels.GamePanel;
 
 import javax.swing.*;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-
+import java.util.concurrent.CancellationException;
 
 /**
- * Adapter pattern - CLIENT.
- * The LAN game only talks to an OpponentConnection. All socket and stream
- * code now lives in SocketConnectionAdapter.
+ * Strategy pattern - CONCRETE STRATEGY: a player on another computer.
+ * On its turn it sends the local move over the network and locks the board
+ * until the other player's move arrives.
+ * It talks to the network only through OpponentConnection, the Stage 2
+ * Adapter, which it uses unchanged. (Was GamePanelLAN.)
  */
-public class GamePanelLAN extends GamePanel implements MoveListener {
+public class NetworkOpponent implements OpponentStrategy, MoveListener {
 
+    private GamePanel game;
     private OpponentConnection connection;
 
-
-    public GamePanelLAN() {
+    @Override
+    public void start(GamePanel game) {
+        this.game = game;
         getSocketIP();
     }
 
-    public void getSocketIP() {
+    private void getSocketIP() {
         JPanel p = new JPanel();
         JTextField IPInput = new JTextField(10);
         JTextField PortInput = new JTextField(10);
@@ -48,19 +53,17 @@ public class GamePanelLAN extends GamePanel implements MoveListener {
                 connect(ipAdd, port);
 
             } catch (Exception e) {
-                int input = JOptionPane.showConfirmDialog(null,
+                JOptionPane.showConfirmDialog(null,
                         "Input data is not valid !", "Error", JOptionPane.DEFAULT_OPTION, JOptionPane.ERROR_MESSAGE);
                 getSocketIP();
             }
         } else {
-            GameFrame gf = ((GameFrame) this.getParent());
-            gf.setVisible(false);
-            gf.dispose();
+            // The player closed the dialog: no game window is opened and the menu stays.
+            throw new CancellationException("Connection cancelled");
         }
     }
 
-
-    public void connect(InetAddress ipAdd, int port) throws IOException {
+    private void connect(InetAddress ipAdd, int port) throws IOException {
         connection = SocketConnectionAdapter.connectOrHost(ipAdd, port);
 
         if (connection.isHost()) {
@@ -70,65 +73,56 @@ public class GamePanelLAN extends GamePanel implements MoveListener {
         } else {
             JOptionPane.showConfirmDialog(null,
                     "You play as Blacks", "Connected !", JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE);
-            whiteMove = false;
-            opponentTurn();
+            game.whiteMove = false;
+            game.enabled = false;
             connection.startListening(this);
         }
+    }
+
+    @Override
+    public void opponentTurn(Position from, Position to) {
+        connection.sendMove(from, to);
+        game.enabled = false;
     }
 
     // ---- MoveListener: called by the connection's receiver thread ----
 
     @Override
     public void onMoveReceived(Position from, Position to) {
-        super.moveChessman(to, from); // super: apply the move without sending it back
-        repaint();
-        enabled = true;
+        // Applied straight to the board; it does not pass through opponentTurn,
+        // so it is never sent back to the player who made it.
+        game.moveChessman(to, from);
+        game.repaint();
+        game.enabled = true;
     }
 
     @Override
     public void onConnectionLost() {
-        if (endGame) return;
+        if (game.isGameOver()) return;
         JOptionPane.showConfirmDialog(null,
                 "Connection is lost. The game is over", "Disconection",
                 JOptionPane.DEFAULT_OPTION, JOptionPane.ERROR_MESSAGE);
-        closeFrame();
-    }
-
-    // ---- the local player's move: apply it, then send it ----
-
-    @Override
-    public void moveChessman(Position newPosition, Position currentPosition) {
-        super.moveChessman(newPosition, currentPosition);
-        connection.sendMove(currentPosition, newPosition);
-        opponentTurn();
-    }
-
-    @Override
-    public void closeFrame() {
-        if (connection != null) connection.close();
-        super.closeFrame();
-    }
-
-
-    @Override
-    void opponentTurn() {
-        enabled = false;
+        game.closeFrame();
     }
 
     // LAN: undo would make the two boards differ, so it is turned off.
     @Override
-    public void undo() {
+    public void undo(MoveHistory history) {
         showUndoUnavailable();
     }
 
     @Override
-    public void redo() {
+    public void redo(MoveHistory history) {
         showUndoUnavailable();
     }
 
     private void showUndoUnavailable() {
-        JOptionPane.showMessageDialog(this, "Undo and Redo are not available in LAN games.",
+        JOptionPane.showMessageDialog(game, "Undo and Redo are not available in LAN games.",
                 "Not available", JOptionPane.INFORMATION_MESSAGE);
     }
 
+    @Override
+    public void stop() {
+        if (connection != null) connection.close();
+    }
 }
