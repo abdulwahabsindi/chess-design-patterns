@@ -2,6 +2,7 @@ package chess.pieces;
 
 import chess.Position;
 import chess.SideColor;
+import chess.graphics.PieceSprites;
 
 import java.util.ArrayList;
 
@@ -13,15 +14,8 @@ public class Rook extends Chessman {
         pos = new Position(x, y);
         notMoved = true;
         value = 525;
-        loadImage();
+        sprite = PieceSprites.get(ChessmanType.ROOK, color);
 
-    }
-
-    @Override
-    protected void loadImage() {
-        if (this.color == SideColor.WHITE) {
-            imgSrc = 2;
-        } else imgSrc = 8;
     }
 
     @Override

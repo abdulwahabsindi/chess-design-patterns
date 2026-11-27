@@ -2,6 +2,7 @@ package chess.pieces;
 
 import chess.Position;
 import chess.SideColor;
+import chess.graphics.PieceSprites;
 
 import java.util.ArrayList;
 
@@ -11,14 +12,7 @@ public class Bishop extends Chessman {
         color = col;
         pos = new Position(x, y);
         value = 350;
-        loadImage();
-    }
-
-    @Override
-    protected void loadImage() {
-        if (this.color == SideColor.WHITE) {
-            imgSrc = 3;
-        } else imgSrc = 9;
+        sprite = PieceSprites.get(ChessmanType.BISHOP, color);
     }
 
     @Override
