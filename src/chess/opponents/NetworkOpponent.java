@@ -1,6 +1,7 @@
 package chess.opponents;
 
 import chess.Position;
+import chess.moves.MoveHistory;
 import chess.network.MoveListener;
 import chess.network.OpponentConnection;
 import chess.network.SocketConnectionAdapter;
@@ -102,6 +103,22 @@ public class NetworkOpponent implements OpponentStrategy, MoveListener {
                 "Connection is lost. The game is over", "Disconection",
                 JOptionPane.DEFAULT_OPTION, JOptionPane.ERROR_MESSAGE);
         game.closeFrame();
+    }
+
+    // LAN: undo would make the two boards differ, so it is turned off.
+    @Override
+    public void undo(MoveHistory history) {
+        showUndoUnavailable();
+    }
+
+    @Override
+    public void redo(MoveHistory history) {
+        showUndoUnavailable();
+    }
+
+    private void showUndoUnavailable() {
+        JOptionPane.showMessageDialog(game, "Undo and Redo are not available in LAN games.",
+                "Not available", JOptionPane.INFORMATION_MESSAGE);
     }
 
     @Override

@@ -1,6 +1,7 @@
 package chess.opponents;
 
 import chess.Position;
+import chess.moves.MoveHistory;
 import chess.panels.GamePanel;
 
 /**
@@ -21,6 +22,23 @@ public class HumanOpponent implements OpponentStrategy {
     @Override
     public void opponentTurn(Position from, Position to) {
         game.whiteMove ^= true;
+    }
+
+    // Hot-seat: one Undo takes back one move, so the turn goes back to the other player.
+    @Override
+    public void undo(MoveHistory history) {
+        if (!history.canUndo()) return;
+        history.undo();
+        game.whiteMove ^= true;
+        game.refreshAfterUndo();
+    }
+
+    @Override
+    public void redo(MoveHistory history) {
+        if (!history.canRedo()) return;
+        history.redo();
+        game.whiteMove ^= true;
+        game.refreshAfterUndo();
     }
 
     @Override

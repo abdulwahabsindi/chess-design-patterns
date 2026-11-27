@@ -1,6 +1,7 @@
 package chess.opponents;
 
 import chess.Position;
+import chess.moves.MoveHistory;
 import chess.panels.GamePanel;
 
 /**
@@ -26,6 +27,12 @@ public interface OpponentStrategy {
      * It is now the opponent's turn.
      */
     void opponentTurn(Position from, Position to);
+
+    /** Edit > Undo: take back moves from the history, in the way this kind of game allows. */
+    void undo(MoveHistory history);
+
+    /** Edit > Redo: the opposite of undo. */
+    void redo(MoveHistory history);
 
     /** The game screen is closing. Release anything the opponent holds. */
     void stop();

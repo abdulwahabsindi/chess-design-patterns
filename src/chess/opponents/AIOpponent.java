@@ -4,6 +4,7 @@ import chess.AI;
 import chess.Move;
 import chess.Position;
 import chess.SideColor;
+import chess.moves.MoveHistory;
 import chess.panels.GamePanel;
 
 import javax.swing.*;
@@ -94,6 +95,24 @@ public class AIOpponent implements OpponentStrategy {
             }
         }
         game.moveChessman(newposition, oldposition);
+    }
+
+    // vs AI: undo your move and the AI's reply together, so it is your turn again.
+    // Not while the AI is thinking (enabled is false then).
+    @Override
+    public void undo(MoveHistory history) {
+        if (!game.enabled || history.undoCount() < 2) return;
+        history.undo();
+        history.undo();
+        game.refreshAfterUndo();
+    }
+
+    @Override
+    public void redo(MoveHistory history) {
+        if (!game.enabled || history.redoCount() < 2) return;
+        history.redo();
+        history.redo();
+        game.refreshAfterUndo();
     }
 
     @Override
