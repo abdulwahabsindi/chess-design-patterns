@@ -2,6 +2,7 @@ package chess.pieces;
 
 import chess.Position;
 import chess.SideColor;
+import chess.graphics.PieceSprites;
 
 import java.util.ArrayList;
 
@@ -13,20 +14,8 @@ public class King extends Chessman {
         pos = new Position(x, y);
         notMoved = true;
         value = 10000;
-        loadImage();
+        sprite = PieceSprites.get(ChessmanType.KING, color);
 
-    }
-
-    @Override
-    public Chessman copy(Chessman other) {
-        return new King(color, pos.x, pos.y);
-    }
-
-    @Override
-    protected void loadImage() {
-        if (this.color == SideColor.WHITE) {
-            imgSrc = 0;
-        } else imgSrc = 6;
     }
 
     @Override

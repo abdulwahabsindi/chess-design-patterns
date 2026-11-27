@@ -115,4 +115,20 @@ public class GamePanelLAN extends GamePanel implements MoveListener {
         enabled = false;
     }
 
+    // LAN: undo would make the two boards differ, so it is turned off.
+    @Override
+    public void undo() {
+        showUndoUnavailable();
+    }
+
+    @Override
+    public void redo() {
+        showUndoUnavailable();
+    }
+
+    private void showUndoUnavailable() {
+        JOptionPane.showMessageDialog(this, "Undo and Redo are not available in LAN games.",
+                "Not available", JOptionPane.INFORMATION_MESSAGE);
+    }
+
 }
