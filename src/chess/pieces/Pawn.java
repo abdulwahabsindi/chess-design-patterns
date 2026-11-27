@@ -2,6 +2,7 @@ package chess.pieces;
 
 import chess.Position;
 import chess.SideColor;
+import chess.graphics.PieceSprites;
 
 import java.util.ArrayList;
 
@@ -14,14 +15,7 @@ public class Pawn extends Chessman {
         color = col;
         pos = new Position(x, y);
         value = 100;
-        loadImage();
-    }
-
-    @Override
-    protected void loadImage() {
-        if (this.color == SideColor.WHITE) {
-            imgSrc = 5;
-        } else imgSrc = 11;
+        sprite = PieceSprites.get(ChessmanType.PAWN, color);
     }
 
     @Override

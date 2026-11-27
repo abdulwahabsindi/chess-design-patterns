@@ -5,14 +5,12 @@ import chess.Position;
 import chess.SideColor;
 import chess.pieces.*;
 
-import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionListener;
 import java.awt.image.BufferedImage;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -31,8 +29,6 @@ public abstract class GamePanel extends JPanel {
     public Chessman[][] piecesBoard;
     private ChessmanFactory factory = new ChessmanFactory();
 
-    private final BufferedImage[] imgTable;
-
     public boolean whiteMove;
     public boolean enabled;
 
@@ -45,7 +41,6 @@ public abstract class GamePanel extends JPanel {
         this.setPreferredSize(new Dimension(8 * SQUARE_SIZE, 8 * SQUARE_SIZE));
 
         piecesBoard = new Chessman[8][8];
-        imgTable = new BufferedImage[12];
         _possibleMoves = new ArrayList<Position>();
         _lastMove = new ArrayList<Position>();
         focus = new Position(0, 0);
@@ -54,7 +49,6 @@ public abstract class GamePanel extends JPanel {
 
 
         generatePieces();
-        loadImages();
         MouseListner();
     }
 
@@ -78,8 +72,7 @@ public abstract class GamePanel extends JPanel {
         for (int i = 0; i < piecesBoard.length; i++) {
             for (int j = 0; j < piecesBoard[i].length; j++) {
                 if (piecesBoard[i][j] != null) {
-                    g.drawImage(imgTable[piecesBoard[i][j].imgSrc], i * SQUARE_SIZE,
-                            j * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE, null);
+                    piecesBoard[i][j].sprite.draw(g, i * SQUARE_SIZE, j * SQUARE_SIZE, SQUARE_SIZE);
                 }
             }
         }
@@ -149,33 +142,6 @@ public abstract class GamePanel extends JPanel {
 
         piecesBoard[4][7] = factory.getPiece(ChessmanType.KING, SideColor.WHITE, 4, 7);
         piecesBoard[4][0] = factory.getPiece(ChessmanType.KING, SideColor.BLACK, 4, 0);
-
-    }
-
-    public void loadImages() {
-        try {
-            String source = "/chess/resources/64/";
-            imgTable[0] = ImageIO.read(getClass().getResource(source + "KgW.png"));
-            imgTable[6] = ImageIO.read(getClass().getResource(source + "KgB.png"));
-
-            imgTable[1] = ImageIO.read(getClass().getResource(source + "QW.png"));
-            imgTable[7] = ImageIO.read(getClass().getResource(source + "QB.png"));
-
-            imgTable[2] = ImageIO.read(getClass().getResource(source + "RW.png"));
-            imgTable[8] = ImageIO.read(getClass().getResource(source + "RB.png"));
-
-            imgTable[3] = ImageIO.read(getClass().getResource(source + "BW.png"));
-            imgTable[9] = ImageIO.read(getClass().getResource(source + "BB.png"));
-
-            imgTable[4] = ImageIO.read(getClass().getResource(source + "KtW.png"));
-            imgTable[10] = ImageIO.read(getClass().getResource(source + "KtB.png"));
-
-            imgTable[5] = ImageIO.read(getClass().getResource(source + "PW.png"));
-            imgTable[11] = ImageIO.read(getClass().getResource(source + "PB.png"));
-        } catch (IOException e) {
-            System.err.println("Error");
-            e.printStackTrace();
-        }
 
     }
 
