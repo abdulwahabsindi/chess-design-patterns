@@ -259,9 +259,9 @@ public class GamePanel extends JPanel {
         if (!contains) return;
         Position oldPosition = _selected.pos;
         moveChessman(newPosition, oldPosition);
-        // TODO(Stage 3, agree with Abdulwahab): this is where the local move hands over to the
-        // opponent. It must stay right after the move is applied; if his Command pattern changes
-        // how moveChessman is called here, move this line to just after the command runs.
+        // Hand the turn to the opponent (agreed with Abdulwahab): moveChessman creates and runs the
+        // move command, then the strategy is called. Only local clicks reach this line; AI and
+        // network moves call moveChessman directly, so they are never handed over or sent back.
         opponent.opponentTurn(oldPosition, newPosition);
 
 
